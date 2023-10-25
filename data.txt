@@ -1,0 +1,590 @@
+scalability issues.
+Over the last years, researchers attempted to extend tSNE
+by adding new data [19], [20], [21] into existing tSNE
+representation. In this paper, we have proposed a new sam-pling technique called k-NN Sampling to extend the Local
+Interpolation with Outlier coNtrol tSNE (LION-tSNE) [22]technique. The LION-tSNE is a novel approach for handlingthe addition of new data samples in two ways. Firstly, theInverse Distance Weight Interpolation (i.e., IDW-Interpolation)algorithm [22] is used to include the inlier data into the trainedtSNE model based on local neighborhood. The local neighbor-hood is obtained from distance radius which is derived fromthe tSNE model. And the second one is Outlier
+Placement
+algorithm [22] which used to compute the free location forplacing the outliers and provides the heuristic to maintain theminimum distance between new and existing outliers. Whileadding new data points in a tSNE environment, the identiﬁedoutliers which does not have any relation with outliers oftSNE are placed randomly in a predeﬁned location. In LION-tSNE model, the random sampling method used for selectinga training sample from the whole population with a givenﬁxed sample size(i.e., two-thirds of the given data). Randomsampling method suffers from inefﬁcient representativeness ofthe complete data that causes lots of variation in result fromone execution to another, which refers to the inconsistency inthe results. In this paper, we are addressing the problem ofnon-representativeness of the random sampling method.
+The organization of the paper is as follows. In section II, we
+are discussing the preliminaries which provide a requirementfor understanding the basics of this paper. Section III describesthe related work. In section IV , we are giving a detaileddescription of the proposed two k-NN sampling approaches. In
+section V , we are providing the result analysis, evaluation, andcomparison between proposed two k-NN sampling method
+results and the state-of-the-art technique LION-tSNE. Finally,section VI gives the direction for future work and conclusion.
+II. P
+RELIMINARY
+A. Student t- Distributed Stochastic Neighbor Embedding(tSNE)
+The tSNE algorithm developed by Laurens van der Maaten
+and Geoffrey Hinton [14] in 2008, based on the SNE [13] al-gorithm. The main idea of SNE algorithm is to represent multi-dimensional data into a human perceptual low-dimensionalspace. The low-dimensional representation of SNE shouldpreserve the underlying structure of high-dimensional data inlow-dimensional space by maintaining a similar neighborhoodproperty of original data. Initially, the tSNE algorithm convertsthe distance between the pair of points into a conditional prob-ability distribution. The probability distribution measures thesimilarity between a pair of points. The divergence betweenthe similarities of high-dimensional data and low-dimensionalembedding is measured by Kullback-Leibler divergence (i.e.,KL-divergence). The minimization of the KL-divergence isobtained by the simple gradient descent that would be anobjective of an SNE algorithm. The workﬂow of tSNE isshown in the ﬁgure 1.
+6 -
+- -? ?Update
+Output Embedding
+Pairwise Similarity Matrix (P)Compute High-Dimensional Compute Gradient Decent of Compute
+KLDIV (P||Q) KLDIV (P||Q)Output Embedding Y={y1, ..., yN}
+Where yi∈Rd
+Input Dataset X={x1, ...., xN}
+where xi∈RmCompute Low-Dimensional
+Pairwise Similarity Matrix(Q)
+Repeat this process until convergence or maximum number of iterations
+Figure 1: The tSNE workﬂow model
+Lets assume we are given an input dataset X =
+{x1,x2,...x N}where each xi∈RDis a D-dimensional
+vector. The given input data can be transformed to Y=
+{y1,y2...y N}where each yi∈Rdis d-dimensional vector,
+d/lessmuchD. The function d(xi,xj)measures the distance between
+pair of points. The similarity between pair of input pointsx
+iandxjis denoted by pj/i. The value of pj/i is the
+probability of choosing xjas neighbor of xi. The neighbors
+ofxiwere chosen in proportion to their probability density
+under a Gaussian distribution with center xi. For instance,
+pj/iis relatively high for nearby data points and inﬁnitesimal
+for faraway points. The pj/iand symmetric pijis deﬁned by
+pj/i=exp/parenleftbigg
+−d(xi,xj)2
+2σi2/parenrightbigg
+/summationtextN
+k/negationslash=iexp/parenleftBig−d(xi,xk)2
+2σi2/parenrightBig,pi/i=0,pij=pj/i+pi/j
+2N(1)
+Where the σiis the variance which can be obtained by
+binary search using perplexity (μ) as a given parameter. The
+perplexity is a smooth measure of an effective number ofneighbors for each data point. The density of the data isdifferent across Euclidean space, therefore we need differentσfor each input x
+i. The probability distribution Piofxiis
+obtained based on the σivalue. The tSNE visual representation
+completely depends on the given parameter perplexity. Theperplexity μis obtained by Shannon entropy of P
+iwhich gives
+the information gain in Information Retrieval System (IRS).When there is an increment in σ
+i, then there is a relative
+increment in entropy. The μand entropy is given by
+μ=2H(Pi)where H (Pi)=−N/summationdisplay
+jpj/ilog2pj/i (2)
+In low-dimensional embedding space, map-points yiandyj
+are the representative of corresponding multi-dimensional datapointsx
+iandxj, the similarity between yiandyjis denoted
+byqij. Theqijis deﬁned by
+qij=(1 +d(yi,yj)2)−1
+/summationtextN
+l/summationtextNk/negationslash=l(1 +d(yl,yk)2)−1,qii=0 (3)
+Here student t-distribution is used instead of Gaussian distri-
+bution. Gaussian distribution of low-dimensional embeddingsuffers with crowding problem [23].
+64Ifpij∼qij,∀i/negationslash=j∈N, then the given data is efﬁciently
+embedded into the low-dimensional space. Otherwise, com-
+pute the KL-divergence (i.e., error) between pijandqijthat
+is equal to the cross-entropy in IRS. The cost function (C )o r
+objective of tSNE is given by
+C=KL(P/bardblQ)=N/summationdisplay
+jpijlogpij
+qij(4)
+The cost function Cis optimized by simple gradient descent
+method which is given by
+∂C
+∂yi=4/summationdisplay
+j(pij−qij)qijZ(yi−yj) (5)
+whereZ=( 1+d(yi,yj)2)−1is a normalization term of stu-
+dent t-distribution. The updatation of map-points are obtainedby applying the equation 5 which computes the attractive and
+repulsive forces applied among map points. If two map pointsare similar, then the attractive force applied; otherwise, therepulsive force applied. The optimization of cost function C
+is suffering from local minima problem which can be resolvedby applying early exaggeration [14] to input similarity. Afterseveral simple gradient descent iterations, the tSNE modelconverges the underlying structure of the input data.
+B. Sampling Clustering (SC)
+Sampling Clustering (SC) [28] constructs a lite informative
+non-binary dendrogram by recursively dividing a graph into
+subgraphs until there are no vertices in the graph. In eachrecursive call, the graph nodes are sampled to disconnect latentsub-clusters. The sampled nodes are removed from the graphalong with edges. After each sampling, condense is applied toavoid the fragmentation of clusters; this allows the addition ofnew edges to remaining nodes by connecting the other nearestneighbor points of a graph. The process of sampling is showninﬁgure 2. This work motivated us to propose new sampling
+methods.
+C. Inverse Distance Weight Interpolation (IDW-Interpolation)
+IDW-Interpolation [26] map new data point x∈R
+Dinto
+the existing embedding yi∈Rd, where{i=1,2,.......m }
+andm<N . IDW-Interpolation determine the value of xas
+weighted sum of values yi, where weight is proportional to
+inverse distances. The IDW-Interpolation of xis given by
+IDWI (x)=/summationdisplay
+/bardblx−xi/bardbl≤rwi(x).yi,
+Where w i(x)=/bardblx−xi/bardbl−p
+/summationtext
+/bardblx−xi/bardbl≤r/bardblx−xi/bardbl−p(6)
+For instance, when the data point x→xi, the inverse
+distance /bardblx−xi/bardbl−1→∞ , the corresponding weight
+wi(x)→1( i.e.,∀j/negationslash=iwj(x)→0due to the normalization)
+andIDWI (x)→yi. In our expermentation we use local
+IDW-Interpolation which consider only limited number of
+neighbor points for computing the value of x. The neighbor
+points selection is done by given parameter radius rxNN . Theparameter rxNN value is calculated by the heuristic proposed
+by Andrey Boytsov et.al. [22]. In local IDW-Interpolation,the power parameter pplays an important role. For instance,
+very small value of ppredict the value of xaround the
+center:y≈mean(y
+i)(unlessx=xi) even the distance
+/bardblx−xi/bardblis low because the weight distribution is close to
+uniform. When the power parameter is high and the distance/bardblx−x
+i/bardblis low, the weight wi(x)of very ﬁrst nearest
+neighbor is dominating all other neighbors, therefore y≈yi
+wherei=argmin/bardblx−xj/bardbl. Too small and too large values
+of p suffers with different forms of overﬁtting. In LOIN-tSNE[22], authors proposed a generalization of power parameterby using leave-one-out cross-validation which is applied ontraining sample. Based on leave-one-out cross validation theycomputed the local IDW-Interpolation for each training samplethat produce the estimation of each y
+i. Afterwards, the mean
+square distance between estimated yi’s and real yi’s is com-
+puted. While optimizing power parameter the mean squareerror should be minimum. The obtained power parameterconsidered as a metric. However, this metric is heuristic, notan exact criteria.
+D. (t,m,s)-Nets and (t,s)-Sequences
+The (t,m,s) -Nets and (t,s)-sequences [24] combines the
+Jittered and Latin Hypercube sampling in order to achieve
+more uniformity and general concepts of stratiﬁcation (seeﬁgure 3(b)). Jittered sampling divides the data space into Nequal sized cubes then select one sample from each cuberandomly, where N=n×mandn∼min 2D coordinated
+dataset(see ﬁgure 3(a)). In Latin hypercube sampling eachdata coordinate is divided into N equal intervals. Then thesamples are chosen randomly such that each interval containsexactly one point (see ﬁgure 3(c)). For instance, 16-sample2D representation of Jittered, Latin Hypercube and (0,4,2)-
+Nets samplings is shown in ﬁgure 3.I n ﬁgure 3, (t,m,s) -
+Nets impose more stratiﬁcation for uniform distribution acrossthe given population. Therefore, the representativeness of thepopulation is maintained more uniformly.
+III. R
+ELA TED WORK
+To incorporate new data into the existing tSNE environment,
+most of the existing technique designed a mapping functionf:X→Y , which accepts multi-dimensional data and returns
+its low-dimensional embedding. Obtained mapping functionsare used for incorporating the new data points into the tSNEenvironment.
+Laurens van der Matten [19], the author of the original tSNE
+algorithm, has proposed parametric tSNE that learn both tSNErepresentation and mapping together. The mapping functionof parametric tSNE is obtained by neural network conceptRestricted Boltzmann Machines(RBM) [29] which is used forbuilding an approximation of tSNE mapping. Gisbrecht et.al.[20] proposed Kernel-tSNE which has close relation to RBF-Interpolation [25] and IDW-Interpolation [26]. Kernel-tSNE isa parametric tSNE designed based on the normalized Gaussiankernels.
+65Figure 2: An ideal ﬂow diagram of sampling cluster. First the dataset is converted into a graph. The graph is sampled, condensed and partitioned into small
+graphs.The same operations are performed until the termination condition is reached.
+Figure 3: Realization of (a) Jittered sampling (b) (0,4,2)-Nets and (c) Latin
+Hypercube sampling
+Pezotti et.al. [21] proposed Approximated-tSNE for Pro-
+gressive Visual Analytics. This algorithm approximates the
+distance function using k-Nearest Neighbors for tSNE embed-ding and also used the degree of approximation to show thetrade-off between embedding quality and computation speedup.
+Andrey Boytsov et.al. [22] proposed LION-tSNE algorithm
+based on local IDW-Interpolation for adding new data sampleinto an existing tSNE environment. It also addresses theoutlier handling approaches. In this paper, we are extend-ing the idea of LION-tSNE algorithm by proposing k-NN
+sampling method for the selection of training samples. Itallows the samples selection with respect to their k-nearestneighbors instead of random sampling for tSNE model design.For more efﬁcient sampling in the context of visualizationreview [34] which selects sample according to the speciﬁedgroup constraint preservation. In our proposed approach, weare choosing samples according to their preference which iscalculated by neighborhood property of each data points. Inour paper, we are addressing the lack of representativenessproblem which is caused by random sampling in LION-tSNE.Therefore, in our experimental evaluation, we are comparingproposed methods results with only LION-tSNE. For detailedcomparative study, refer Andrey Boytsov et.al. [22] paper.
+IV . P
+ROPOSED METHOD
+The framework of the proposed method is shown in the
+ﬁgure 4. It has four stages, at stage 1 data preprocessingwill be done such as the removal of redundant data pointsand ﬁlling the empty variables with appropriate values. Atstage 2, the proposed k-NN sampling is done for selectingtrain
+sample which is described in section A. At stage 3,
+the selected train samples projected into a low-dimensional
+embedding with Barnes-Hut tSNE (BH-tSNE) [27] and newdata points are added into the tSNE model that discussed insection B. At Last k-NN accuracy is calculated for whole data
+as discussed in section C.
+- - -
+?Data Preprocessing
+k-NN Accuracy1.Interpolating new dataLION-tSNE forInput
+Data
+1. Remove redundencytrain sample selection
+2.Outlier handlingDesign tSNE model on
+train sample to projectk-NN Sampling for
+from HD to LD
+Figure 4: Proposed framework of k-NN sampling for visualization of dynamic
+data using LION-tSNE
+A. k- Nearest Neighbor sampling (k-NN sampling)
+In our proposed k-NN sampling method, we are comput-
+ing Nearest Neighbor score (NN score) and Mutual Nearest
+Neighbor score (MNN score) from the k-NN graph. Lets
+assumek-NN graph is a directed graph G=(V,E), the edge
+E(v1,v2)givesv2as a neighbor of v1and neighborhood of v1
+is denoted by Nv1. The out-degree of each vertex is equal to
+k, and the in-degree of a vertex depends on the neighborhood
+property of other vertices. In our method, each data point is
+considered as a vertex of the k-NN graph and kis taken as
+a parameter for selecting the optimal training sample. TheNN
+score of data point xiis equal to the in-degree ofxi
+which is given by
+NNscore (xi)=|{xj|xi∈Nxj}|,∀j/negationslash=ixj∈X (7)
+whereXdenotes whole data set, Nxjdenotes the neighbor-
+hood ofxj. The MNN score of data point xiis at most k
+which is given by
+MNNscore(x i)=|{xj|xi∈Nxj∧xi|xj∈Nxi}|,∀j/negationslash=ixj∈X
+(8)
+66The data point xiis selected as a train sample and which can
+have representativeness of its neighbors is given by
+trainsample =firstindex{argmax xi∈X
+{NNscore(xi)}∩argmax xi∈X{MNN score(xi)}} (9)
+Proposed k-NN sampling algorithm shown in algorithm 1.
+Initially, the train sample is a null set; at each iteration, one
+data point is appended to the train sample. At each iteration,
+train sample as well as its mutual neighbors, are deleted from
+theXand then k-NN graph is updated. For k-NN graph
+updation we are proposing two different strategies, one is
+statick-NN graph updation and another one is dynamic k-NN
+graph updation. The train samples are selected according to
+the above two methods. In both approaches, the train sample
+selection is repeating until the NN score of remaining Xis
+equal to zero or size of remaining Xis less than kofk-NN
+graph. Later, if the size of the remaining Xis equal to zero,
+then the selected train sample represents the complete data,
+and it is considered to be good. Otherwise, the data pointsare sampled from the remaining Xusing (t,m,s)-Nets. The
+samples which are selected using (t,m,s)-Nets are appendedto the train
+sample for improving the representativeness of
+the data. The computational complexity of proposed methodisO(N
+2)which limits the algorithm scalable to large datasets.
+To get the effective insights from the obtained NN score’s and
+MNN score’s we would like to visualize the k-NN graphs of
+proposed methods with terrain metaphor [33] which can bedone in future work. The embedding of selected train
+sample
+and addition of new data into an existing tSNE environmentis described in the following section.
+B. Low-dimensional embedding of data
+1) tSNE model: train
+sample embedding: Barnes-Hut
+tSNE (BH-tSNE) [27] algorithm is used to generate low-
+dimensional embedding of selected train sample data. BH-
+tSNE is an optimized version of tSNE; it optimizes thetSNE objective function by input similarity approximationand gradient descent approximation. The original BH-tSNEalgorithm takes initial embedding points randomly and thenapplies early exaggeration on original data. The process ofearly exaggeration is used to move two similar points near toeach other in embedding space. The random initial solutiontakes more number of iteration for convergence. To overcomethis problem, in our experimentation, we are consideringtwo more initial solutions such as PCA and MDS for betteraccuracy and to reduce the divergence cost. For adding newdata points into a tSNE model is discussing in the belowsection.
+2) LION-tSNE: Interpolation and Outlier handling: The
+new data points are added to the tSNE model in two ways.The new data point addition will be done according to thecalculated parameter, r
+xNN ,ryNN andrclose . The parameter
+rxNN is the minimum radius of input data that decides whether
+the given new data point is either inlier or outlier based onthe heuristic proposed by Andrey Boytsov et.al [22]. TheseAlgorithm 1: k-NN Sampling algorithm
+Data: data setX={x1,x2,.....xN}, parameter k for minimal
+train sample
+Result: Return train sample
+trainsample =∅
+begin
+Compute k-NN graph of X
+repeat
+Compute NNscore (X)
+Compute MNNscore(X )
+index =[NNscore(X )= =
+argmax{NN score(X )}]/*gives all index
+which are having same NN-score */
+iflen(index )>1then
+trainindex =argmax{MNN score(x i)}where
+i∈index
+end
+else
+trainindex =index
+endtrain
+sample =trainsample∪X[index ]
+Determine the mutual neighbors of index
+Delete the selected index as well as its mutual neighbors
+fromX
+ifsampling is dynamic then
+Re-compute k-NN graph of remain X
+end
+until (NN−score(X )=0 )∨(|trainsample|≤k);
+ifXis not Null then
+trainsample =trainsample∪(t,m,s) −Nets (X)
+end
+end
+parameters are derived from the designed tSNE model. Inlier
+data points are interpolated into the designed tSNE modelusing local IDW-Interpolation method. The identiﬁed outlierswhich are no more related to outliers of tSNE they can beplaced randomly into the predeﬁned locations. In otherwords,the identiﬁed outliers have some relation with outliers of tSNEthat are placed near to them by using parameter r
+close . The
+parameter ryNN is the minimum distance from data points to
+outliers and from outlier to outlier, and the outlier locationsare determined by the outlier
+placement algorithm using ryNN
+based on the heuristic proposed by Andrey Boytsov et.al [22].
+C.k-NN accuracy
+The newly added data samples should be embedded among
+the training samples of similar characteristics. To evaluate
+this, for each newly added data sample k-NN accuracy is
+calculated in embedding space, and observe the percentageofkneighbors which are having the similar characteristics.
+Thek-NN accuracy typically depends on the parameter k
+value which is considered as ﬁxed in our experimentation. Forinstance, the smaller value of kwill give good performance
+accuracy and while increasing the kvalue performance accu-
+racy will decrease. The selection of parameter kis also playing
+a paramount role in k-NN accuracy measure. The relationship
+between k-value and accuracy is shown in the ﬁgure 5.
+V. E
+V ALUA TION
+To evaluate the proposed method, The results of proposed
+methods are compared with the state-of-the-art technique
+67LION-tSNE. We performed experiments on ﬁve numerical
+datasets that represent applications of various domains.
+The section Adescribes the datasets which are used in
+our experiments. The experimental conﬁguration explored insection B. In section C, we present the experimental evaluation
+among the results of our proposed methods based LION-tSNEand random sampling based LION-tSNE. The evaluation isdone by considering three different initial solutions such asPCA, MDS and random for designing initial tSNE model.
+A. Datasets
+In our experimental evaluation, we have considered ﬁve
+differently characterized datasets such as IRIS dataset, Breast-
+Cancer dataset, Wine dataset, MNIST dataset, and Olivetti-Faces dataset. In Olivetti-Faces dataset, ten images of oneindividual were considered as small variation in viewpoint,large variation in expression, and addition of glasses. Thetable Iprovides the detailed description of all ﬁve datasets.
+Dataset Name Size Dimensions Classes
+IRIS 150 4 3
+Breast Cancer 569 30 2
+Wine 178 13 3
+MNSIT 70K 784 10
+Olivetti faces 400 10304 40
+Table I: Overview of datasets along with their size, dimensions, and classes
+B. Experimental conﬁguration
+In all of our experimental evaluation, we have used three
+different initial solutions for embedding of BH-tSNE that arePCA, MDS, and random. The PCA and MDS initial solutionsreduce the divergence cost. The datasets with more than 30dimensions, their dimensionality is reduced to 30 dimensionsby PCA. This process speeds up the computation of theprobability distribution of the input similarity and suppressessome noise. The results of BH-tSNE algorithm are shown inscatter-plot representation. For all the datasets, there is a classinformation of each data point which can be used only forvisual clarity of a scatter-plot. The data point class informationis not used for any other purposes.
+Due to the computational complexity of proposed method
+and BH-tSNE algorithm (i.e., computational complexityO(NlogN) ) we have considered limited dataset size for
+computation. For our experimentation, we have considered themaximum dataset size as 10K. There is a scope for expansionof dataset size by extending the implementation in distributedenvironment.
+Table IIprovides the parameter settings of our experimental
+evaluation. The parameter perplexity represents the effective
+number of neighbors for each data point. For instance, thesmall value of perplexity creates subgroups within the same
+cluster of tSNE results. In contrast to small, the large valueof it does not maintain the clear separation between twoclusters of tSNE results. In both cases, there is a lack ofvisual clarity, the empirical studies state that the perplexityvalue between 5 to 70 gives a good visual representation oftSNE results. The parameter dist
+per represents the overall
+percentage of train sample points considered as inliers. For
+example, if we take dist peras 95th percentile that means out
+of 100 points, 95 points are considered as inliers and remaining5 points are considered as an outlier. The parameter kplays
+an important role in the computation of k-NN accuracy of the
+data. The effect of parameter kis shown in the ﬁgure 5.I t
+is clear that when there is an increment in kvalue, accuracy
+decrease monotonically. The ﬁgure 5 shows the k-NN accuracy
+of including and excluding outliers. Because of the paperlimitations, we are evaluating the proposed k-NN sampling
+method results using only one dataset (i.e., MNIST dataset ofsize 10K).
+Parameter Value
+Perplexity 5-3 0
+rxNN atdist perc 100
+Fixed k-value for k-NN accuracy 10, 3(for Olivetti-face dataset)
+Table II: Parameters setting for the experimental setup
+Figure 5: Relationship between k-value of k-NN accuracy and k-NN accuracy
+which is deﬁned on optimal train sample size.
+C. Results
+Inﬁgure 6, we show the experimental train sample selection
+results of proposed k-NN sampling methods(with static and
+dynamic k-NN graph update) and random sampling on IRIS
+dataset. For clear 2D visual clarity, we have chosen IRISdataset because original dimensionality of the IRIS dataset isfour which is very small. So, the direct 2D visual representa-tion of 4D data (i.e., IRIS data) does not show the huge varia-tion in scatter-plot representation. The train
+sample selection
+(i.e., represented by blue star scatter-plot point) results in sub-ﬁgure 6(a)and6(b)of the proposed k-NN sampling methods
+clearly shows the uniﬁed sampling of complete data. In sub-ﬁgure 6(c), the results of random sampling shows that some
+regions of the data are not covered by selected sample andrandom sampling is not consistent. Due to the inconsistency ofrandom sampling, there is a lack of representativeness whichcauses the inefﬁcient result of tSNE.
+The relationship between train
+sample selection and ﬁxed
+k-NN accuracy is shown in the ﬁgure 7. The ﬁgure 7(a)and
+7(b)shows the realization of k-NN accuracy with including
+and excluding outliers and train sample size. In both the
+ﬁgures, it is clear that the k-NN accuracy of both including and
+68(a) Static k-NN sampling
+ (b) Dynamic k-NN sampling
+ (c) Random sampling
+Figure 6: Training sample selection (i.e., represented by blue star scatter-plot point) from IRIS dataset using proposed k-NN sampling methods(with static
+and dynamic k-NN graph update) and random sampling
+excluding outliers is monotonically reducing while increasing
+thek-value of k-NN sampling. The corresponding random
+sampling results also realized beside proposed sampling results(i.e, titled as Random sampling). There is a small ﬂuctuation inthe accuracy curve which is caused by additional train
+sample
+selection from the remaining list using (t,m,s)-Nets. Thetrain
+sample size is also decreasing while increasing the k-
+value of k-NN sampling. The relationship between k-NN
+accuracy of including and excluding outliers is deﬁned bythe Pearson correlation coefﬁcient [30]. For all datasets, thecorrelation coefﬁcient is approximately equal to one whichmeans both including and excluding outliers k-NN accuracies
+are more similar to each other (that means optimal solutionhas very small number of outliers). The relationship betweentrain
+sample size and ﬁxed k-NN accuracy is derived by
+linear regression model [31] which is shown in the ﬁgure7(c),7(d)and 7(e). The linear regression model for three
+different situations will produce good regression score (i.e.,above 0.9). Empirically, the regression score is more than 0.5
+means the y variable (i.e., y-axis) is well deﬁned by variablex (i.e., x-axis).
+The ﬁgure 8 gives the 2D visual representation of MNIST
+dataset of 10K points with PCA based initial solution. Sub-ﬁgures 8(a),8(d)and8(g)shows train
+sample scatter-plots
+which is obtained by BH-tSNE model. Sub-ﬁgure 8(a)and
+8(d)shows the scatter-plots of proposed methods; static and
+dynamic k-NN sampling. The ﬁgure 8(g)shows the scatter-
+plot of random sampling of a size equivalent to the staticvariant of the proposed method. The ﬁgures 8(b),8(c),8(e),
+8(f),8(h)and 8(i)shows the scatter-plots of LION-tSNE
+of all three methods. The ﬁgures 8(b),8(e)and8(h)gives
+the scatter-plots of three methods before power parameteroptimization. The ﬁgures 8(c),8(f)and8(i)shows the scatter-
+plots of all three methods after power parameter optimization.After power optimization, the scatter-plots of the proposedmethods are more clear and effective than the state-of-the-arttechnique.
+In our result analysis, we are comparing the k-NN accura-
+cies of proposed k-NN sampling and random sampling based
+LION-tSNE results. We are also using three different initialsolutions such as PCA, MDS and random. The empirical studystates that the results of MDS are computationally slower thanthe results of PCA. The PCA and MDS initial solutions reducethe computational complexity of the original tSNE modelby early convergence. The accuracies of proposed k-NN and
+random sampling based LION-tSNE results are assessed withbaseline accuracy. Baseline accuracy is obtained by applyingtSNE on overall data. The baseline accuracies of ﬁve datasetsare shown in the table III. The k-NN accuracy comparison of
+proposed k-NN and random sampling based LION-tSNE re-
+sults on MNIST dataset with three different initial solutions isshown in the ﬁgure 9 along with baseline accuracy. The ﬁgure
+9(a),9(b)and9(c)clearly shows that the k-NN accuracies
+of proposed k-NN sampling based LION-tSNE outperforms
+existing state-of-the-art that is random sampling based LION-tSNE in all three initial solution constraint. Also, proposedmethods accuracy results are almost equal to baseline results.For some datasets such as IRIS, Breast-Cancer, and Wine,the proposed methods accuracy result is more than baselineaccuracy. The k-NN accuracies of proposed k-NN and random
+sampling based LION-tSNE results on ﬁve datasets with threedifferent initial solutions are listed in table IVand V.
+Dataset Dataset size Baseline Accuracy
+IRIS 150 0.95238
+Breast-Cancer 569 0.91282
+Wine 178 0.69943
+MNIST Digits 10000 0.93298999
+Olivetti face 400 0.92416
+Table III: k-NN accuracy of static variant of proposed method for various
+datasets
+Tabel IVshows the static k-NN and random sampling based
+k-NN accuracies of LION-tSNE on all ﬁve datasets. For all
+ﬁve datasets with all three initial solution constraints and sametrain
+sample size, the static k-NN sampling based LION-tSNE
+is giving better k-NN accuracies than random sampling based
+LION-tSNE. In tabel V, thek-NN accuracies of dynamic
+k-NN and random sampling based LION-tSNE are listed
+on all ﬁve datasets. Here also, the dynamic k-NN sampling
+based LION-tSNE is reporting better k-NN accuracies than
+random sampling based LION-tSNE in all circumstances. Ifwe compare the results of both proposed methods whichare shown in table IVand V. The static method gives more
+accuracy than dynamic one. We also observed that in mostof the cases both static and dynamic k-NN sampling methods
+selecting optimal train
+sample at k-value either one or two of
+k-NN graph.
+69(a) Realization of train sample size and k-NN accuracy of
+static k-NN and random sampling based LION-tSNE results
+with ten different k-values
+(b) Realization of train sample size and k-NN accuracy of
+dynamic k-NN and random sampling based LION-tSNE results
+with ten different k-values
+(c) Relationship between train sample size and
+k-NN accuracy of static k-NN sampling method
+(d) Relationship between train sample size and
+k-NN accuracy of random sampling method
+(e) Relationship between train sample size and
+k-NN accuracy of dynamic k-NN sampling
+method
+Figure 7: Realization of train sample size and ﬁxed k-NN accuracy, relationship between train sample size and ﬁxed k-NN accuracy with liner regression
+model.
+Dataset Initial Train Static k-NN sampling Ran.sampling
+solution
+typesamplesize Opt.k-value Opt.power k-NN
+accurOpt.power k-NN
+accur
+IRIS PCA 54 3 2 0.96068 1 0.94246
+MDS 44 5 2 0.96382 9 0.94701
+Random 66 2 2 0.95586 5 0.94082
+Breast PCA 108 9 46 0.91265 49 0.90530
+Cancer MDS 80 14 15 0.91569 11 0.89557
+Random 63 19 3 0.91058 32 0.90353
+Wine PCA 70 3 1 0.69943 3 0.68563
+MDS 36 7 6 0.70505 44 0.67901
+Random 50 5 2 0.71348 1 0.70568
+MNIST PCA 5169 1 49 0.91387 45 0.90855
+Digits MDS 4586 2 48 0.91882 49 0.89989
+Random 5118 1 48 0.91879 45 0.90869
+Olivetti PCA 217 1 31 0.91583 41 0.88719
+Face MDS 220 1 39 0.915 40 0.89313
+Random 221 1 40 0.92333 26 0.89983
+Table IV: k-NN accuracy results of LION-tSNE for static k-NN and random
+sampling on ﬁve datasets
+The proposed k-NN sampling methods are statistically
+signiﬁcant than the random one which is proved by the
+statistical method pairwise t-test [32]. For pairwise t-test, wehave repeated out experiments 25 times on all ﬁve datasets.Each time we have collected optimal LION-tSNE accuracyresults of proposed methods as well as corresponding LION-tSNE results of random sampling method. The proposed k-
+NN sampling based LION-tSNE gives more consistent resultsthan random one which is shown in the ﬁgure 10. The ﬁgure
+10(a) and 10(b) clearly shows the superiority of proposed k-
+NN sampling over random sampling. The ﬁgure 10(c) shows
+the results of static k-NN sampling are more accurate than
+dynamic k-NN sampling. For evaluation, we have conducted
+three pairwise t-test such as static k-NN vs random, dynamicDataset Initial Train Dynamic k-NN sampling Ran.sampling
+solution
+typesamplesize Opt.k-value Opt.power k-NN
+accurOpt.power k-NN
+accur
+IRIS PCA 49 2 18 0.96013 1 0.95546
+MDS 49 2 6 0.96293 3 0.9531
+Random 49 2 21 0.96223 32 0.95174
+Breast PCA 241 2 26 0.90984 9 0.90598
+Cancer MDS 191 2 30 0.91232 19 0.90896
+Random 152 5 5 0.91669 43 0.90371
+Wine PCA 68 3 1 0.71404 4 0.69548
+MDS 89 1 5 0.71129 1 0.69017
+Random 69 3 1 0.70617 35 0.69550
+MNIST PCA 5000 1 49 0.91592 49 0.90700
+Digits MDS 5000 1 48 0.92032 49 0.91221
+Random 5000 1 42 0.91324 49 0.90984
+Olivetti PCA 200 1 41 0.91 49 0.87786
+Face MDS 200 1 46 0.91916 47 0.87955
+Random 200 1 23 0.92499 22 0.88416
+Table V: k-NN accuracy results of LION-tSNE for static k-NN and random
+sampling on ﬁve datasets
+k-NN vs random and static k-NN vs dynamic k-NN. From
+all three t-test for all ﬁve datasets, we have obtained the
+positive values for t-statistic and p-values are less than 0.05.
+The sample pairwise t-test of MNIST dataset is shown inthe table VI. The empirical studies states that the p-value of
+pairwise t-test is less than 0.05then the results are statistically
+signiﬁcant. Therefore, the proposed k-NN sampling methods
+are more consistent and efﬁcient.
+t-test pair t-statistic value p-value
+(static k-NN, random) 10.908428 4.38×10−11
+(dynamic k-NN, random) 5.233352 1.15×10−5
+(static k-NN, dynamic k-NN) 12.709989 1.88×10−12
+Table VI: Pairwise t-test results on MNIST dataset of size 10K for evaluation
+of statistical signiﬁcance
+70(a) Proposed static k-NN sampling based 2D
+visual representation of tSNE
+(b) Proposed static k-NN sampling based 2D vi-
+sual representation of LION-tSNE before power
+parameter optimization
+(c) Proposed static k-NN sampling based 2D
+visual representation of LION-tSNE after powerparameter optimization
+(d) Proposed dynamic k-NN sampling based 2D
+visual representation of tSNE
+(e) Proposed dynamic k-NN sampling based
+2D visual representation of LION-tSNE beforepower parameter optimization
+(f) Proposed dynamic k-NN sampling based 2D
+visual representation of LION-tSNE after powerparameter optimization
+(g) Random sampling based 2D visual represen-
+tation of tSNE
+(h) Random sampling based 2D visual repre-
+sentation of LION-tSNE before power parameteroptimization
+(i) Random sampling based 2D visual representation
+of LION-tSNE after power parameter optimization
+Figure 8: Three different 2D visual representation of tSNE and LION-tSNE on MNIST dataset of size 10K
+VI. C ONCLUSION AND FUTURE WORK
+This paper deals with adding new data samples into the
+existing tSNE environment to overcome the scalability is-
+sues. We proposed two new approaches such as static anddynamic k-NN graph update methods (i.e., k-NN sampling)
+for good tSNE model design. This method selects the uniﬁedtrain
+samples from entire data. The proposed methods give
+good samples to overcome the lack of representativeness.Our experiments on ﬁve datasets show that proposed methodsoutperform existing state-of-the-art techniques for adding newdata point into an existing tSNE environment and also handledoutliers.
+Proposed method deals with numerical datasets which can
+be enhanced in future to categorical and mixed datasets.Due to the computational complexity, the proposed methodis suitable to limited dataset size. To overcome this limitation,it can be implemented in distributed environment. In ourwork, we are assuming some of the data points are outliersfrom tSNE enviroment; instead of that we would like to dealoutliers within the tSNE itself by introducing threshold value.Also, to get clear insights from the obtained NN
+score and
+MNN score, it is good to view the visual representation of
+k-NN graph. Therefore, we would like to use the method of
+Yang Zhang et.al. [33] to visualize the relationship among thedata points.
+R
+EFERENCES
+[1] L. van der Maaten, E. Postma, and H. van den Herik. Dimensionality
+reduction: A comparative review. Technical report, Tilburg University
+Technical Report, TiCC-TR 2009-005, 2009.
+[2] J. V enna, J. Peltonen, K. Nybo, H. Aidos, and S. Kaski. Information
+retrieval perspective to nonlinear dimensionality reduction for datavisualization. Journal of Machine Learning Research, 11:451-490, 2010.
+[3] K. Bunte, M. Biehl, and B. Hammer. A general framework for di-
+mensionality reducing data visualization mapping. Neural Computation,24(3):771-804,2012.
+[4] M. Partridge and R. Calvo. Fast dimensionality reduction and Simple
+PCA. Intelligent Data Analysis, 2(3):292-298, 1997.
+[5] J. Shi and J. Malik. Normalized cuts and image segmentation. IEEE
+Transactions on Pattern Analysis and Machine Intelligence, 22(8):888-905, 2000.
+[6] Trevor F. Cox,Michael A. A. Cox. Multidimensional scaling, 2nd edi-
+tion,Chapman & Hall/CRC, 2001.
+71(a) MDS initial solution
+ (b) PCA initial solution
+ (c) Random initial solution
+Figure 9: Performance evaluation of proposed static k-NN sampling based LION-tSNE accuracy results with baseline accuracy for three different initial
+solutions of MNIST dataset of size 10K.
+(a) Static k-NN vs random sampling
+ (b) Dynamic k-NN vs random sampling
+ (c) Static vs dynamic k-NN sampling
+Figure 10: Comparison of three different paired results of LION-tSNE over 25 intervals on MNIST dataset of size 10K. The initial solution is PCA based.
+[7] J. Tenenbaum, V . da Silva, and J. Langford. A global geometric framework
+for nonlinear dimensionality reduction. Science, 290:2319-2323, 2000.
+[8] J.W. Sammon. A nonlinear mapping for data structure analysis . IEEE
+Transactions on Computers, 18(5):401-409, 1969.
+[9] P . Demartines, J.Herault, Curvilinear Component Analysis: A Self-
+Organizing Neural Networks for nonlinear mapping of datasets, IEEE
+Trans. Neural Networks, vol.8, pp.1197-1206, 1997.
+[10] S. T. Roweis and L. K. Saul., Nonlinear dimensionality reduction by
+locally linear embedding, Science, 290: 2323 - 2326, 2000.
+[11] M. Belkin and P . Niyogi. Laplacian eigenmaps for dimensionality
+reduction and data representation . Neural Computation, 15:1373-1396,
+2003.
+[12] K. Weinberger and L. K. Saul., An introduction to nonlinear dimension-
+ality reduction by maximum variance unfolding. In Proceedings of theNational Conference on Artiﬁcial Intelligence, pages 1683-1686, Boston,MA, 2006.
+[13] Geoffrey E Hinton and Sam T. Roweis. Stochastic Neighbor Embedding ,
+Advances in Neural Information Processing Systems 15, pages 857-864.MIT Press, 2003.
+[14] Laurens van der Maaten and Geoffrey Hinton, Visualizing Data using
+t-SNE, Journal of Machine Learning Research, 9(Nov):2579-2605, 2008.
+[15] Wentian Li, Jane E. Cerise, Yaning Yang, and Henry Han. Application
+of t-SNE to human genetic data, J. Bioinform. Comput. Biol. (2017), p.1750017, 10.1142/S0219720017500172
+[16] Minh Nguyen, Sanjay Purushotham, Hien To, and Cyrus Shahabi. m-
+TSNE: A Framework for Visualizing High-Dimensional Multivariate TimeSeries, In V AHC2016 Workshop on Visual Analytics in Healthcare inconjunction with AMIA 2016, 2016.
+[17] Walid M. Abdelmoula, Benjamin Balluff, Sonja Englert, Jouke Dijkstra,
+Marcel J. T. Reinders, Axel Walch, Liam A. McDonnell, and BoudewijnP . F. Lelieveldt. Data-driven identiﬁcation of prognostic tumor subpopu-
+lations using spatially mapped t-SNE of mass spectrometry imaging data,Proceedings of the National Academy of Sciences, 113(43):12244-12249,October 2016.
+[18] T. Kohonen. Self-organization and associative memory: 3 rd edition.
+Springer-V erlag New York, Inc., New York, NY , USA, 1989.
+[19] Laurens van der Maaten, Learning a Parametric Embedding by Preserv-
+ing Local Structure , In International Conference on Artiﬁcial Intelligence
+and Statistics, pages 384391, 2009.
+[20] Andrej Gisbrecht, Alexander Schulz, and Barbara Hammer. Parametric
+nonlinear dimensionality reduction using kernel t-SNE, Neurocomputing,147:7182, January 2015.[21] N. Pezzotti, B. P . F. Lelieveldt, L. v d Maaten, T. Hllt, E. Eisemann,
+and A. Vilanova. Approximated and User Steerable tSNE for Progressive
+Visual Analytics, IEEE Transactions on Visualization and ComputerGraphics, 23(7):17391752, July 2017.
+[22] Boytsov A, Fouquet F, Hartmann T, LeTraon Y . Visualizing
+and exploring dynamic high-dimensional datasets with LION-tSNE,arXiv:1708.04983, 2017.
+[23] J.A. Cook, I. Sutskever, A. Mnih, and G.E. Hinton. Visualizing similarity
+data with a mixture of maps, In Proceedings of the 11 th InternationalConference on Artiﬁcial Intelligence and Statistics, volume 2, pages 6774,2007.
+[24] T. Kollig, A. Keller, Efﬁcient multidimensional sampling, Computer
+Graphics Forum, vol. 21, no. 3, 2002.
+[25] Martin D. Buhmann. Radial Basis Functions: Theory and Imple-
+mentations. Cambridge University Press, July 2003. Google-Books-ID:TRMf53opzlsC.
+[26] Donald Shepard. A Two-dimensional Interpolation Function for
+Irregularly-spaced Data, In Proceedings of the 1968 23rd ACM NationalConference, ACM 68, pages 517524, New York, NY , USA, 1968.
+[27] L. van der Maaten, Accelerating t-sne using tree-based algorithms,J .
+Mach. Learn. Res., vol. 15, pp. 32213245, 2014.
+[28] Ching Tarn, Yinan Zhang and Ye Feng, Sampling Clustering,
+arXiv:1806.08245v1 [cs.CV], June 2018.
+[29] Geoffrey E. Hinton, Simon Osindero, and Yee-Whye Teh. A Fast Learn-
+ing Algorithm for Deep Belief Nets, Neural Computation, 18(7):15271554,May 2006.
+[30] B. Jacob, J. Chen, Y . Huang, I. Cohen, Pearson correlation coefﬁcient in
+Noise Reduction in Speech Processing, Berlin, Germany:Springer-V erlag,pp. 1-4, 2009.
+[31] D.C. Montgomery,Design and Analysis of Experiments (3rd Edition),
+Wiley, New York (1991)
+[32] L. J. Williams and H. Abdi, Fishers least signiﬁcance difference (LSD)
+test, in Encyclopedia of Research Design. Thousand Oaks, 2010, pp.491494.
+[33] Y . Zhang, Y . Wang, S. Parthasarathy, ”Visualizing attributed graphs
+via terrain metaphor”, Proc. 23rd ACM SIGKDD Int. Conf. Knowl.Discovery Data Mining, pp. 1325-1334, 2017.
+[34] Albert Kim , Eric Blais , Aditya Parameswaran , Piotr Indyk , Sam
+Madden , Ronitt Rubinfeld, Rapid sampling for visualizations withordering guarantees, Proceedings of the VLDB Endowment, v.8 n.5,p.521-532, January 2015.
+72
